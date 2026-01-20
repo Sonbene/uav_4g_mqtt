@@ -3,11 +3,11 @@
 <title>Static Call Graph - [test_a7600\test_a7600.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image test_a7600\test_a7600.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Tue Jan 20 16:10:00 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Tue Jan 20 17:00:28 2026
 <BR><P>
-<H3>Maximum Stack Usage =        540 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =        524 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
-__rt_entry_main &rArr; main &rArr; App_Run &rArr; MavlinkBridge_Process &rArr; send_frame_hex &rArr; A7600_MQTT_PublishString &rArr; A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
+__rt_entry_main &rArr; main &rArr; App_Run &rArr; MavlinkBridge_Process &rArr; A7600_MQTT_PublishString &rArr; A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
 <P>
 <H3>
 Functions with no stack information
@@ -210,8 +210,8 @@ Global Symbols
 <P><STRONG><a name="[d4]"></a>__rt_entry_postsh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000009))
 
 <P><STRONG><a name="[3e]"></a>__rt_entry_main</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$0000000D))
-<BR><BR>[Stack]<UL><LI>Max Depth = 540 + Unknown Stack Size
-<LI>Call Chain = __rt_entry_main &rArr; main &rArr; App_Run &rArr; MavlinkBridge_Process &rArr; send_frame_hex &rArr; A7600_MQTT_PublishString &rArr; A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
+<BR><BR>[Stack]<UL><LI>Max Depth = 524 + Unknown Stack Size
+<LI>Call Chain = __rt_entry_main &rArr; main &rArr; App_Run &rArr; MavlinkBridge_Process &rArr; A7600_MQTT_PublishString &rArr; A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
 </UL>
 <BR>[Calls]<UL><LI><a href="#[3f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 <LI><a href="#[40]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;exit
@@ -465,6 +465,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_SetConfig
 <LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_InitTick
 <LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DMA_CalcBaseAndBitshift
+<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;to_base64
 </UL>
 
 <P><STRONG><a name="[de]"></a>__aeabi_idiv</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, aeabi_sdiv.o(.text), UNUSED)
@@ -601,7 +602,6 @@ Global Symbols
 <P><STRONG><a name="[7c]"></a>A7600_MQTT_IsConnected</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, a7600_mqtt.o(i.A7600_MQTT_IsConnected))
 <BR><BR>[Called By]<UL><LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;App_Run
 <LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MavlinkBridge_Process
-<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;send_frame_hex
 </UL>
 
 <P><STRONG><a name="[69]"></a>A7600_MQTT_Process</STRONG> (Thumb, 164 bytes, Stack size 24 bytes, a7600_mqtt.o(i.A7600_MQTT_Process))
@@ -615,12 +615,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;App_Run
 </UL>
 
-<P><STRONG><a name="[6c]"></a>A7600_MQTT_Publish</STRONG> (Thumb, 218 bytes, Stack size 296 bytes, a7600_mqtt.o(i.A7600_MQTT_Publish))
+<P><STRONG><a name="[6c]"></a>A7600_MQTT_Publish</STRONG> (Thumb, 206 bytes, Stack size 296 bytes, a7600_mqtt.o(i.A7600_MQTT_Publish))
 <BR><BR>[Stack]<UL><LI>Max Depth = 428 + Unknown Stack Size
 <LI>Call Chain = A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
 </UL>
-<BR>[Calls]<UL><LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_Delay
-<LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wait_response
+<BR>[Calls]<UL><LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wait_response
 <LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;send_and_wait
 <LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;clear_rx_buffer
 <LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_DMA_Transmit
@@ -637,8 +636,8 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[6d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;strlen
 <LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;A7600_MQTT_Publish
 </UL>
-<BR>[Called By]<UL><LI><a href="#[73]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;App_PublishStatus
-<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;send_frame_hex
+<BR>[Called By]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MavlinkBridge_Process
+<LI><a href="#[73]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;App_PublishStatus
 </UL>
 
 <P><STRONG><a name="[77]"></a>A7600_MQTT_SetMessageCallback</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, a7600_mqtt.o(i.A7600_MQTT_SetMessageCallback))
@@ -689,8 +688,8 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[78]"></a>App_Run</STRONG> (Thumb, 134 bytes, Stack size 24 bytes, app.o(i.App_Run))
-<BR><BR>[Stack]<UL><LI>Max Depth = 532 + Unknown Stack Size
-<LI>Call Chain = App_Run &rArr; MavlinkBridge_Process &rArr; send_frame_hex &rArr; A7600_MQTT_PublishString &rArr; A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
+<BR><BR>[Stack]<UL><LI>Max Depth = 516 + Unknown Stack Size
+<LI>Call Chain = App_Run &rArr; MavlinkBridge_Process &rArr; A7600_MQTT_PublishString &rArr; A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
 </UL>
 <BR>[Calls]<UL><LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
 <LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_Delay
@@ -769,7 +768,6 @@ Global Symbols
 <LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;send_and_wait
 <LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;A7600_MQTT_Disconnect
 <LI><a href="#[62]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;A7600_MQTT_Connect
-<LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;A7600_MQTT_Publish
 </UL>
 
 <P><STRONG><a name="[9b]"></a>HAL_GPIO_Init</STRONG> (Thumb, 396 bytes, Stack size 24 bytes, stm32f0xx_hal_gpio.o(i.HAL_GPIO_Init))
@@ -992,16 +990,17 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[29]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;mqtt_message_callback
 </UL>
 
-<P><STRONG><a name="[7b]"></a>MavlinkBridge_Process</STRONG> (Thumb, 202 bytes, Stack size 24 bytes, mavlink_bridge.o(i.MavlinkBridge_Process))
-<BR><BR>[Stack]<UL><LI>Max Depth = 508 + Unknown Stack Size
-<LI>Call Chain = MavlinkBridge_Process &rArr; send_frame_hex &rArr; A7600_MQTT_PublishString &rArr; A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
+<P><STRONG><a name="[7b]"></a>MavlinkBridge_Process</STRONG> (Thumb, 232 bytes, Stack size 32 bytes, mavlink_bridge.o(i.MavlinkBridge_Process))
+<BR><BR>[Stack]<UL><LI>Max Depth = 492 + Unknown Stack Size
+<LI>Call Chain = MavlinkBridge_Process &rArr; A7600_MQTT_PublishString &rArr; A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
 </UL>
 <BR>[Calls]<UL><LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
+<LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;A7600_MQTT_PublishString
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;A7600_MQTT_IsConnected
 <LI><a href="#[6b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_DMA_Read
 <LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_DMA_Available
 <LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memmove
-<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;send_frame_hex
+<LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;to_base64
 </UL>
 <BR>[Called By]<UL><LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;App_Run
 </UL>
@@ -1178,8 +1177,8 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[3f]"></a>main</STRONG> (Thumb, 148 bytes, Stack size 8 bytes, main.o(i.main))
-<BR><BR>[Stack]<UL><LI>Max Depth = 540 + Unknown Stack Size
-<LI>Call Chain = main &rArr; App_Run &rArr; MavlinkBridge_Process &rArr; send_frame_hex &rArr; A7600_MQTT_PublishString &rArr; A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
+<BR><BR>[Stack]<UL><LI>Max Depth = 524 + Unknown Stack Size
+<LI>Call Chain = main &rArr; App_Run &rArr; MavlinkBridge_Process &rArr; A7600_MQTT_PublishString &rArr; A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
 </UL>
 <BR>[Calls]<UL><LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_DMA_Init
 <LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_NVIC_SetPriority
@@ -1352,12 +1351,10 @@ Local Symbols
 <LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;A7600_MQTT_Publish
 </UL>
 
-<P><STRONG><a name="[a7]"></a>send_frame_hex</STRONG> (Thumb, 82 bytes, Stack size 24 bytes, mavlink_bridge.o(i.send_frame_hex))
-<BR><BR>[Stack]<UL><LI>Max Depth = 484 + Unknown Stack Size
-<LI>Call Chain = send_frame_hex &rArr; A7600_MQTT_PublishString &rArr; A7600_MQTT_Publish &rArr; send_and_wait &rArr; UART_DMA_TransmitString &rArr; UART_DMA_Transmit &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
+<P><STRONG><a name="[a7]"></a>to_base64</STRONG> (Thumb, 148 bytes, Stack size 24 bytes, mavlink_bridge.o(i.to_base64))
+<BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = to_base64
 </UL>
-<BR>[Calls]<UL><LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;A7600_MQTT_PublishString
-<LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;A7600_MQTT_IsConnected
+<BR>[Calls]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_uidivmod
 </UL>
 <BR>[Called By]<UL><LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MavlinkBridge_Process
 </UL>

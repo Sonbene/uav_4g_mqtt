@@ -457,7 +457,7 @@ MQTT_Result_t A7600_MQTT_Publish(A7600_MQTT_Handle_t *handle, const char *topic,
         handle->state = MQTT_STATE_CONNECTED;
         return MQTT_ERROR;
     }
-    HAL_Delay(100);
+    //HAL_Delay(100);
     
     /* Step 2: Set payload */
     snprintf(cmd, sizeof(cmd), "AT+CMQTTPAYLOAD=0,%d\r\n", len);
@@ -475,7 +475,7 @@ MQTT_Result_t A7600_MQTT_Publish(A7600_MQTT_Handle_t *handle, const char *topic,
         handle->state = MQTT_STATE_CONNECTED;
         return MQTT_ERROR;
     }
-    HAL_Delay(100);
+    //HAL_Delay(100);
     
     /* Step 3: Publish */
     /* AT+CMQTTPUB=<client_index>,<qos>,<pub_timeout> */

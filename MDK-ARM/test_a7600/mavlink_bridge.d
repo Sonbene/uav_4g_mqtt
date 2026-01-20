@@ -35,4 +35,3 @@ test_a7600\mavlink_bridge.o: ../Core/Inc/uart_dma.h
 test_a7600\mavlink_bridge.o: D:\Keil_C\ARM\ARMCC\Bin\..\include\stdbool.h
 test_a7600\mavlink_bridge.o: ../Core/Inc/a7600_mqtt.h
 test_a7600\mavlink_bridge.o: D:\Keil_C\ARM\ARMCC\Bin\..\include\string.h
-test_a7600\mavlink_bridge.o: D:\Keil_C\ARM\ARMCC\Bin\..\include\stdio.h

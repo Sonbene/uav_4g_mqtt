@@ -718,7 +718,7 @@ I (../Core/Inc/certificates.h)(0x696F07F0)
 I (../Core/Inc/debug_log.h)(0x696F40A4)
 I (D:\Keil_C\ARM\ARMCC\include\stdio.h)(0x5CEB87F2)
 I (D:\Keil_C\ARM\ARMCC\include\string.h)(0x5CEB87F2)
-F (..\Core\Src\a7600_mqtt.c)(0x696F0BC4)(--c99 -c --cpu Cortex-M0 -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ../Core/lib-I.\RTE\_test_a7600-ID:\Keil_C\ARM\CMSIS\5.5.1\CMSIS\Core\Include-ID:\Keil_C\Keil\STM32F0xx_DFP\2.0.0\Drivers\CMSIS\Device\ST\STM32F0xx\Include-D__UVISION_VERSION="528" -D_RTE_ -DSTM32F030x8 -DUSE_HAL_DRIVER -DSTM32F030x8-o test_a7600\a7600_mqtt.o --omf_browse test_a7600\a7600_mqtt.crf --depend test_a7600\a7600_mqtt.d)
+F (..\Core\Src\a7600_mqtt.c)(0x696F4F14)(--c99 -c --cpu Cortex-M0 -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ../Core/lib-I.\RTE\_test_a7600-ID:\Keil_C\ARM\CMSIS\5.5.1\CMSIS\Core\Include-ID:\Keil_C\Keil\STM32F0xx_DFP\2.0.0\Drivers\CMSIS\Device\ST\STM32F0xx\Include-D__UVISION_VERSION="528" -D_RTE_ -DSTM32F030x8 -DUSE_HAL_DRIVER -DSTM32F030x8-o test_a7600\a7600_mqtt.o --omf_browse test_a7600\a7600_mqtt.crf --depend test_a7600\a7600_mqtt.d)
 I (../Core/Inc/a7600_mqtt.h)(0x696F0937)
 I (../Core/Inc/main.h)(0x696D8E6B)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h)(0x696AF4C9)
@@ -793,7 +793,7 @@ I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h)(0x696AF4C9)
 I (D:\Keil_C\ARM\ARMCC\include\stdio.h)(0x5CEB87F2)
 I (D:\Keil_C\ARM\ARMCC\include\stdarg.h)(0x5CEB87F4)
 I (D:\Keil_C\ARM\ARMCC\include\string.h)(0x5CEB87F2)
-F (..\Core\Src\mavlink_bridge.c)(0x696F4637)(--c99 -c --cpu Cortex-M0 -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ../Core/lib-I.\RTE\_test_a7600-ID:\Keil_C\ARM\CMSIS\5.5.1\CMSIS\Core\Include-ID:\Keil_C\Keil\STM32F0xx_DFP\2.0.0\Drivers\CMSIS\Device\ST\STM32F0xx\Include-D__UVISION_VERSION="528" -D_RTE_ -DSTM32F030x8 -DUSE_HAL_DRIVER -DSTM32F030x8-o test_a7600\mavlink_bridge.o --omf_browse test_a7600\mavlink_bridge.crf --depend test_a7600\mavlink_bridge.d)
+F (..\Core\Src\mavlink_bridge.c)(0x696F5235)(--c99 -c --cpu Cortex-M0 -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ../Core/lib-I.\RTE\_test_a7600-ID:\Keil_C\ARM\CMSIS\5.5.1\CMSIS\Core\Include-ID:\Keil_C\Keil\STM32F0xx_DFP\2.0.0\Drivers\CMSIS\Device\ST\STM32F0xx\Include-D__UVISION_VERSION="528" -D_RTE_ -DSTM32F030x8 -DUSE_HAL_DRIVER -DSTM32F030x8-o test_a7600\mavlink_bridge.o --omf_browse test_a7600\mavlink_bridge.crf --depend test_a7600\mavlink_bridge.d)
 I (../Core/Inc/mavlink_bridge.h)(0x696F2AB3)
 I (../Core/Inc/main.h)(0x696D8E6B)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h)(0x696AF4C9)
@@ -829,5 +829,4 @@ I (../Core/Inc/uart_dma.h)(0x696F2E04)
 I (D:\Keil_C\ARM\ARMCC\include\stdbool.h)(0x5CEB87EE)
 I (../Core/Inc/a7600_mqtt.h)(0x696F0937)
 I (D:\Keil_C\ARM\ARMCC\include\string.h)(0x5CEB87F2)
-I (D:\Keil_C\ARM\ARMCC\include\stdio.h)(0x5CEB87F2)
 F (..\Core\Inc\mavlink_bridge.h)(0x696F2AB3)()

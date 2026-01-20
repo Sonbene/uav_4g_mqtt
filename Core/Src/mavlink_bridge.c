@@ -1,13 +1,22 @@
 /**
  * @file    mavlink_bridge.c
- * @brief   MAVLink Bridge with Frame Parsing and Debug
+ * @brief   MAVLink Bridge with Configurable Encoding (HEX or Base64)
  */
 
 #include "mavlink_bridge.h"
 #include <string.h>
-#include <stdio.h>
 
-/* MAVLink 2 Constants */
+/* ==================== ENCODING OPTIONS ==================== */
+/* Change this to select encoding mode:
+ *   ENCODE_HEX    - Output: "FD1C0000..." (100% size increase)
+ *   ENCODE_BASE64 - Output: "/RwAAA..."  (33% size increase)
+ */
+#define ENCODE_HEX      0
+#define ENCODE_BASE64   1
+
+#define BRIDGE_ENCODING ENCODE_BASE64  /* <-- CHANGE THIS TO SELECT */
+
+/* ==================== MAVLink 2 Constants ==================== */
 #define MAVLINK_V2_MAGIC        0xFD
 #define MAVLINK_HEADER_LEN      10
 #define MAVLINK_CHECKSUM_LEN    2
@@ -15,20 +24,23 @@
 #define MAVLINK_IFLAG_SIGNED    0x01
 
 /* Config */
-#define FRAME_TIMEOUT_MS        200     /* Max time to wait for complete frame */
+#define FRAME_TIMEOUT_MS        50
 
-/* Hex encoding table */
+/* Encoding tables */
 static const char hex_table[] = "0123456789ABCDEF";
+static const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /* Internal State */
 static struct {
     UART_DMA_Handle_t *uart;
     A7600_MQTT_Handle_t *mqtt;
-    uint8_t rx_buf[512];       /* Raw buffer */
+    uint8_t rx_buf[512];
     size_t rx_len;
-    uint32_t last_rx_tick;     /* Last time we received data */
-    char tx_buf[1100];         /* For hex encoding (512*2 + header) */
+    uint32_t last_rx_tick;
+    char tx_buf[1100];  /* Max: 512 * 2 + 1 for hex, or 512 * 4/3 + 4 for base64 */
 } bridge;
+
+/* ==================== Encoding Functions ==================== */
 
 /**
  * @brief Convert binary to hex string
@@ -45,17 +57,58 @@ static size_t to_hex(const uint8_t *data, size_t len, char *out)
 }
 
 /**
- * @brief Send MAVLink frame as hex-encoded text (no prefix)
+ * @brief Convert binary to Base64 string
  */
-static void send_frame_hex(const uint8_t *frame, size_t len)
+static size_t to_base64(const uint8_t *data, size_t len, char *out)
+{
+    size_t i, j;
+    uint32_t octet_a, octet_b, octet_c, triple;
+    
+    for (i = 0, j = 0; i < len; ) {
+        octet_a = i < len ? data[i++] : 0;
+        octet_b = i < len ? data[i++] : 0;
+        octet_c = i < len ? data[i++] : 0;
+        
+        triple = (octet_a << 16) | (octet_b << 8) | octet_c;
+        
+        out[j++] = b64_table[(triple >> 18) & 0x3F];
+        out[j++] = b64_table[(triple >> 12) & 0x3F];
+        out[j++] = b64_table[(triple >> 6) & 0x3F];
+        out[j++] = b64_table[triple & 0x3F];
+    }
+    
+    /* Add padding */
+    size_t mod = len % 3;
+    if (mod == 1) {
+        out[j - 1] = '=';
+        out[j - 2] = '=';
+    } else if (mod == 2) {
+        out[j - 1] = '=';
+    }
+    
+    out[j] = '\0';
+    return j;
+}
+
+/**
+ * @brief Send MAVLink frame with selected encoding
+ */
+static void send_frame(const uint8_t *frame, size_t len)
 {
     if (bridge.mqtt && A7600_MQTT_IsConnected(bridge.mqtt)) {
-        to_hex(frame, len, bridge.tx_buf);
+        size_t encoded_len;
+        
+        #if BRIDGE_ENCODING == ENCODE_BASE64
+            encoded_len = to_base64(frame, len, bridge.tx_buf);
+        #else
+            encoded_len = to_hex(frame, len, bridge.tx_buf);
+        #endif
+        
         A7600_MQTT_PublishString(bridge.mqtt, BRIDGE_TOPIC_TX, bridge.tx_buf, MQTT_QOS_0);
     }
 }
 
-
+/* ==================== Public Functions ==================== */
 
 void MavlinkBridge_Init(UART_DMA_Handle_t *uart, A7600_MQTT_Handle_t *mqtt)
 {
@@ -88,23 +141,22 @@ void MavlinkBridge_Process(void)
 
     /* 2. Check for timeout (incomplete frame) - discard silently */
     if (bridge.rx_len > 0 && (now - bridge.last_rx_tick > FRAME_TIMEOUT_MS)) {
-        bridge.rx_len = 0;  /* Discard */
+        bridge.rx_len = 0;
         return;
     }
 
-    /* 3. Try to parse MAVLink frames */
+    /* 3. Parse MAVLink frames */
     while (bridge.rx_len > 0) {
         /* Sync: Find magic byte */
         if (bridge.rx_buf[0] != MAVLINK_V2_MAGIC) {
-            /* Not MAVLink 2, discard silently */
             memmove(bridge.rx_buf, &bridge.rx_buf[1], bridge.rx_len - 1);
             bridge.rx_len--;
             continue;
         }
 
-        /* Need at least 3 bytes for length and flags */
+        /* Need at least 3 bytes */
         if (bridge.rx_len < 3) {
-            break; /* Wait for more */
+            break;
         }
 
         uint8_t payload_len = bridge.rx_buf[1];
@@ -117,7 +169,6 @@ void MavlinkBridge_Process(void)
 
         /* Sanity check */
         if (packet_len > 300) {
-            /* Invalid length, discard byte */
             memmove(bridge.rx_buf, &bridge.rx_buf[1], bridge.rx_len - 1);
             bridge.rx_len--;
             continue;
@@ -125,8 +176,8 @@ void MavlinkBridge_Process(void)
 
         /* Check if complete frame available */
         if (bridge.rx_len >= packet_len) {
-            /* Complete frame! Send as hex */
-            send_frame_hex(bridge.rx_buf, packet_len);
+            /* Complete frame! Send with selected encoding */
+            send_frame(bridge.rx_buf, packet_len);
             
             /* Remove from buffer */
             if (bridge.rx_len > packet_len) {
@@ -134,7 +185,6 @@ void MavlinkBridge_Process(void)
             }
             bridge.rx_len -= packet_len;
         } else {
-            /* Not enough data yet */
             break;
         }
     }
@@ -145,7 +195,7 @@ void MavlinkBridge_OnMessage(const char *topic, const uint8_t *payload, size_t l
     if (bridge.uart == NULL) return;
 
     if (strstr(topic, "mavlink/rx") != NULL) {
-        /* TODO: Decode hex if needed, for now pass through */
+        /* Forward to UART (TODO: decode if needed) */
         UART_DMA_Transmit(bridge.uart, payload, len);
     }
 }
