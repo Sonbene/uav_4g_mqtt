@@ -49,10 +49,13 @@ DMA_HandleTypeDef hdma_usart2_tx;
 
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_tx;
+DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
 /* UART DMA handle for A7600 SIM module */
 UART_DMA_Handle_t sim_uart;
+/* UART DMA handle for Telemetry (MAVLink) */
+UART_DMA_Handle_t telem_uart;
 
 /* Application handle */
 App_Handle_t app;
@@ -328,12 +331,10 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
     if (huart->Instance == USART2) {
         UART_DMA_TxCplt_Callback(&sim_uart);
     }
-    #ifdef DEBUG_ENABLE
     if (huart->Instance == USART1) {
-        extern void Debug_TxCpltCallback(UART_HandleTypeDef *huart);
-        Debug_TxCpltCallback(huart);
+        UART_DMA_TxCplt_Callback(&telem_uart);
     }
-    #endif
+    /* #ifdef DEBUG_ENABLE ... Removed for Telem */
 }
 
 /* USER CODE END 4 */

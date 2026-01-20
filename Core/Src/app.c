@@ -5,13 +5,14 @@
  */
 
 #include "app.h"
+#include "mavlink_bridge.h"
 #include "certificates.h"
 #include "debug_log.h"
 #include <stdio.h>
 #include <string.h>
 
 /* Private variables */
-static char publish_buffer[128];
+/* static char publish_buffer[128]; */
 
 /* Private function prototypes */
 static void mqtt_message_callback(const char *topic, const uint8_t *payload, size_t len);
@@ -25,7 +26,11 @@ static void mqtt_message_callback(const char *topic, const uint8_t *payload, siz
     
     /* Example: Parse command and respond */
     /* if (strstr(topic, "command") != NULL) { ... } */
+    
+    /* Forward to MAVLink Bridge */
+    MavlinkBridge_OnMessage(topic, payload, len);
 }
+
 
 /* ==================== Public Functions ==================== */
 
@@ -41,6 +46,12 @@ bool App_Init(App_Handle_t *app, UART_DMA_Handle_t *uart)
     app->last_publish_tick = 0;
     app->last_reconnect_tick = 0;
     app->error_count = 0;
+
+    /* Initialize Bridge with Global Telem Handle (defined in main.c) */
+    extern UART_DMA_Handle_t telem_uart;
+    extern UART_HandleTypeDef huart1;
+    UART_DMA_Init(&telem_uart, &huart1);
+    MavlinkBridge_Init(&telem_uart, &app->mqtt);
     
     /* Configure MQTT */
     MQTT_Config_t mqtt_config = {
@@ -89,7 +100,10 @@ bool App_Connect(App_Handle_t *app)
         app->error_count = 0;
         
         /* Subscribe to command topic */
-        A7600_MQTT_Subscribe(&app->mqtt, APP_TOPIC_COMMAND, MQTT_QOS_0);
+        //A7600_MQTT_Subscribe(&app->mqtt, APP_TOPIC_COMMAND, MQTT_QOS_0);
+        
+        /* Subscribe to Bridge Rx */
+        A7600_MQTT_Subscribe(&app->mqtt, BRIDGE_TOPIC_RX, MQTT_QOS_0);
         
         /* Publish online status */
         App_PublishStatus(app, "online");
@@ -173,6 +187,9 @@ void App_Run(App_Handle_t *app)
             /* Process MQTT */
             A7600_MQTT_Process(&app->mqtt);
             
+            /* Process MAVLink Bridge */
+            MavlinkBridge_Process();
+            
             /* Check connection */
             if (!A7600_MQTT_IsConnected(&app->mqtt)) {
                 app->state = APP_STATE_ERROR;
@@ -184,11 +201,11 @@ void App_Run(App_Handle_t *app)
                 app->last_publish_tick = current_tick;
                 
                 /* Publish heartbeat */
-                snprintf(publish_buffer, sizeof(publish_buffer), 
-                         "{\"uptime\":%lu,\"errors\":%lu}", 
-                         current_tick / 1000, app->error_count);
-                LOG_INFO("Publishing Sensor Data: %s", publish_buffer);
-                App_PublishSensor(app, publish_buffer);
+                // snprintf(publish_buffer, sizeof(publish_buffer), 
+                //          "{\"uptime\":%lu,\"errors\":%lu}", 
+                //          current_tick / 1000, app->error_count);
+                //LOG_INFO("Publishing Sensor Data: %s", publish_buffer);
+                //App_PublishSensor(app, publish_buffer);
             }
             break;
             

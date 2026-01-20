@@ -13,9 +13,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-/* Buffer sizes - can be adjusted as needed */
-#define UART_DMA_RX_BUFFER_SIZE     256
-#define UART_DMA_TX_BUFFER_SIZE     256
+/* Buffer sizes - adjusted for MAVLink */
+/* Buffer sizes - adjusted for MAVLink (and RAM constraints) */
+#define UART_DMA_RX_BUFFER_SIZE     512
+#define UART_DMA_TX_BUFFER_SIZE     512
 
 /**
  * @brief UART DMA Handle structure (simplified RX)

@@ -34,6 +34,7 @@ test_a7600\app.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h
 test_a7600\app.o: ../Core/Inc/uart_dma.h
 test_a7600\app.o: D:\Keil_C\ARM\ARMCC\Bin\..\include\stdbool.h
 test_a7600\app.o: ../Core/Inc/a7600_mqtt.h
+test_a7600\app.o: ../Core/Inc/mavlink_bridge.h
 test_a7600\app.o: ../Core/Inc/certificates.h
 test_a7600\app.o: ../Core/Inc/debug_log.h
 test_a7600\app.o: D:\Keil_C\ARM\ARMCC\Bin\..\include\stdio.h

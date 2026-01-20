@@ -25,6 +25,7 @@
 "test_a7600\app.o"
 "test_a7600\a7600_mqtt.o"
 "test_a7600\debug_log.o"
+"test_a7600\mavlink_bridge.o"
 --strict --scatter "test_a7600\test_a7600.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers
