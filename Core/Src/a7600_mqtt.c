@@ -201,10 +201,10 @@ MQTT_Result_t A7600_MQTT_Connect(A7600_MQTT_Handle_t *handle)
     handle->state = MQTT_STATE_STARTING;
     retry = 3;
     while (retry-- > 0) {
-        if (send_and_wait(handle, "AT\r\n", "OK", 2000)) {
+        if (send_and_wait(handle, "AT\r\n", "OK", 500)) {
             break;
         }
-        HAL_Delay(1000);
+        HAL_Delay(200);
     }
     if (retry < 0) {
         LOG_ERROR("Module not responding to AT commands");
@@ -213,7 +213,7 @@ MQTT_Result_t A7600_MQTT_Connect(A7600_MQTT_Handle_t *handle)
         handle->state = MQTT_STATE_ERROR;
         return MQTT_ERROR;  /* Module not responding */
     }
-    HAL_Delay(500);
+    HAL_Delay(100);
     
     /* ========== Step 2: Check SIM card ========== */
     LOG_INFO("Step 2: Checking SIM card...");
@@ -224,17 +224,17 @@ MQTT_Result_t A7600_MQTT_Connect(A7600_MQTT_Handle_t *handle)
         LOG_ERROR("SIM Card Error or PIN Required");
         return MQTT_ERROR;  /* SIM not inserted or PIN required */
     }
-    HAL_Delay(500);
+    HAL_Delay(100);
     
     /* ========== Step 3: Check network registration ========== */
     LOG_INFO("Step 3: Checking Network Registration...");
     retry = 30;  /* Wait up to 30 seconds for network */
     while (retry-- > 0) {
-        if (send_and_wait(handle, "AT+CREG?\r\n", "+CREG: 0,1", 2000) ||
-            send_and_wait(handle, "AT+CREG?\r\n", "+CREG: 0,5", 2000)) {
+        if (send_and_wait(handle, "AT+CREG?\r\n", "+CREG: 0,1", 500) ||
+            send_and_wait(handle, "AT+CREG?\r\n", "+CREG: 0,5", 500)) {
             break;  /* Registered home (1) or roaming (5) */
         }
-        HAL_Delay(1000);
+        HAL_Delay(500);
     }
     if (retry < 0) {
         handle->error_step = 3;
@@ -243,16 +243,16 @@ MQTT_Result_t A7600_MQTT_Connect(A7600_MQTT_Handle_t *handle)
         LOG_ERROR("Network Registration Failed");
         return MQTT_ERROR;  /* Not registered to network */
     }
-    HAL_Delay(500);
+    HAL_Delay(100);
     
     /* ========== Step 4: Check GPRS/LTE registration ========== */
     retry = 30;
     while (retry-- > 0) {
-        if (send_and_wait(handle, "AT+CGREG?\r\n", "+CGREG: 0,1", 2000) ||
-            send_and_wait(handle, "AT+CGREG?\r\n", "+CGREG: 0,5", 2000)) {
+        if (send_and_wait(handle, "AT+CGREG?\r\n", "+CGREG: 0,1", 500) ||
+            send_and_wait(handle, "AT+CGREG?\r\n", "+CGREG: 0,5", 500)) {
             break;  /* GPRS registered */
         }
-        HAL_Delay(1000);
+        HAL_Delay(500);
     }
     if (retry < 0) {
         handle->error_step = 4;
@@ -260,16 +260,17 @@ MQTT_Result_t A7600_MQTT_Connect(A7600_MQTT_Handle_t *handle)
         handle->state = MQTT_STATE_ERROR;
         return MQTT_ERROR;  /* GPRS not registered */
     }
-    HAL_Delay(500);
+    HAL_Delay(100);
     
+    /* ========== Step 5: Activate PDP context ========== */
     /* ========== Step 5: Activate PDP context ========== */
     /* First deactivate any existing context */
     send_and_wait(handle, "AT+CGACT=0,1\r\n", "OK", 5000);
-    HAL_Delay(500);
+    HAL_Delay(100);
     
     /* Set APN (default, may need to change for specific carrier) */
     send_and_wait(handle, "AT+CGDCONT=1,\"IP\",\"internet\"\r\n", "OK", 2000);
-    HAL_Delay(200);
+    HAL_Delay(50);
     
     /* Activate PDP context */
     if (!send_and_wait(handle, "AT+CGACT=1,1\r\n", "OK", 10000)) {
@@ -278,20 +279,21 @@ MQTT_Result_t A7600_MQTT_Connect(A7600_MQTT_Handle_t *handle)
         handle->state = MQTT_STATE_ERROR;
         return MQTT_ERROR;  /* Failed to activate data */
     }
-    HAL_Delay(1000);
+    HAL_Delay(100);
     
     /* ========== Step 6: Check signal quality ========== */
     send_and_wait(handle, "AT+CSQ\r\n", "OK", 2000);
-    HAL_Delay(200);
+    HAL_Delay(50);
     
+    /* ========== Step 7: Start MQTT service ========== */
     /* ========== Step 7: Start MQTT service ========== */
     /* First stop any existing MQTT session */
     send_and_wait(handle, "AT+CMQTTDISC=0,60\r\n", "OK", 2000);
-    HAL_Delay(200);
+    HAL_Delay(50);
     send_and_wait(handle, "AT+CMQTTREL=0\r\n", "OK", 2000);
-    HAL_Delay(200);
+    HAL_Delay(50);
     send_and_wait(handle, "AT+CMQTTSTOP\r\n", "OK", 2000);
-    HAL_Delay(500);
+    HAL_Delay(100);
     
     /* Start MQTT service */
     if (!send_and_wait(handle, "AT+CMQTTSTART\r\n", "OK", MQTT_CMD_TIMEOUT)) {
@@ -303,7 +305,7 @@ MQTT_Result_t A7600_MQTT_Connect(A7600_MQTT_Handle_t *handle)
             return MQTT_ERROR;
         }
     }
-    HAL_Delay(500);
+    HAL_Delay(100);
     
     /* ========== Step 8: Acquire MQTT client ========== */
     handle->state = MQTT_STATE_ACQUIRING;
@@ -314,7 +316,7 @@ MQTT_Result_t A7600_MQTT_Connect(A7600_MQTT_Handle_t *handle)
         handle->state = MQTT_STATE_ERROR;
         return MQTT_ERROR;
     }
-    HAL_Delay(500);
+    HAL_Delay(100);
     
     /* ========== Step 9: Configure SSL ========== */
     if (handle->config.use_ssl) {
@@ -323,7 +325,7 @@ MQTT_Result_t A7600_MQTT_Connect(A7600_MQTT_Handle_t *handle)
         /* Configure SSL Context 0 */
         /* TLS 1.2 */
         send_and_wait(handle, "AT+CSSLCFG=\"sslversion\",0,4\r\n", "OK", 2000);
-        HAL_Delay(100);
+        HAL_Delay(50);
         
         /* Configure Server CA Certificate - REMOVED */
         /* send_and_wait(handle, "AT+CSSLCFG=\"cacert\",0,\"customer_root_ca.pem\"\r\n", "OK", 2000); */
@@ -331,15 +333,15 @@ MQTT_Result_t A7600_MQTT_Connect(A7600_MQTT_Handle_t *handle)
 
         /* Set Authentication Mode: 0 (No Verify) */
         send_and_wait(handle, "AT+CSSLCFG=\"authmode\",0,0\r\n", "OK", 2000);
-        HAL_Delay(100);
+        HAL_Delay(50);
         
         /* Enable SNI (Required for HiveMQ Cloud) */
         send_and_wait(handle, "AT+CSSLCFG=\"enableSNI\",0,1\r\n", "OK", 2000);
-        HAL_Delay(100);
+        HAL_Delay(50);
         
         /* Ignore time check */
         send_and_wait(handle, "AT+CSSLCFG=\"ignorelocaltime\",0,1\r\n", "OK", 2000);
-        HAL_Delay(100);
+        HAL_Delay(50);
 
         /* Bind SSL Context 0 to MQTT Session 0 */
         if (!send_and_wait(handle, "AT+CMQTTSSLCFG=0,0\r\n", "OK", MQTT_CMD_TIMEOUT)) {
