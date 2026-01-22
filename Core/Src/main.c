@@ -110,11 +110,16 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  
+  /* Log init (will be empty if disabled) */
+  Debug_Init();
+  LOG_INFO("System Booting - Wait 5s...");
+
 	GPIOB->ODR &= ~(0x01 << 11);
   GPIOC->ODR &= ~(0x01 << 13);
 	GPIOA->ODR &= ~(0x01 << 15);
 	
-	HAL_Delay(1000);
+	HAL_Delay(500);
   
   /* Set GPIO pins high - Power on A7600 module */
   GPIOB->ODR |= (0x01 << 11);
@@ -122,8 +127,10 @@ int main(void)
 	GPIOA->ODR |= (0x01 << 15);
   
   /* Wait for module to boot */
-  HAL_Delay(5000);
+  //HAL_Delay(5000);
   
+  LOG_INFO("Initializing Modules...");
+
   /* Initialize UART DMA with circular RX for A7600 SIM module */
   UART_DMA_Init(&sim_uart, &huart2);
   
@@ -134,8 +141,9 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint32_t last_tick = 0;
   while (1)
-  {
+  { 
     /* Run application - handles MQTT connection, publishing, etc */
     App_Run(&app);
     
@@ -264,6 +272,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Channel2_3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel2_3_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
   /* DMA1_Channel4_5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel4_5_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel4_5_IRQn);

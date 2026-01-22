@@ -40,18 +40,6 @@ void Debug_Log(const char *fmt, ...)
     va_list args;
     int len;
     
-    /* Simple protection: wait for previous transfer to complete */
-    /* Note: In a real RTOS or high-perf app, use a ring buffer. 
-       For this simple debugger, blocking wait is acceptable safeguards against overwriting. */
-    uint32_t timeout = 0xFFFFF;
-    while(tx_busy && timeout--) {
-        /* If DMA gets stuck, eventually break to avoid hanging system */
-        if (timeout == 0) {
-            tx_busy = false; 
-            HAL_UART_AbortTransmit(DEBUG_UART);
-        }
-    }
-
     va_start(args, fmt);
     len = vsnprintf(log_buffer, LOG_BUFFER_SIZE, fmt, args);
     va_end(args);
@@ -59,10 +47,8 @@ void Debug_Log(const char *fmt, ...)
     if (len > 0) {
         if (len > LOG_BUFFER_SIZE) len = LOG_BUFFER_SIZE;
         
-        tx_busy = true;
-        if (HAL_UART_Transmit_DMA(DEBUG_UART, (uint8_t*)log_buffer, len) != HAL_OK) {
-            tx_busy = false;
-        }
+        /* Use blocking transmit to avoid DMA conflicts with MAVLink/UART_DMA wrapper */
+        HAL_UART_Transmit(DEBUG_UART, (uint8_t*)log_buffer, len, 1000);
     }
 }
 

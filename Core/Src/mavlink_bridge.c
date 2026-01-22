@@ -4,6 +4,7 @@
  */
 
 #include "mavlink_bridge.h"
+#include "debug_log.h"
 #include <string.h>
 
 /* ==================== ENCODING OPTIONS ==================== */
@@ -87,6 +88,82 @@ static size_t to_base64(const uint8_t *data, size_t len, char *out)
     }
     
     out[j] = '\0';
+    return j;
+}
+
+/**
+ * @brief Convert Hex string to binary
+ */
+static size_t from_hex(const char *src, size_t len, uint8_t *out)
+{
+    size_t j = 0;
+    for (size_t i = 0; i < len; i += 2) {
+        if (i + 1 >= len) break;
+        
+        char c1 = src[i];
+        char c2 = src[i+1];
+        
+        uint8_t v1 = (c1 >= '0' && c1 <= '9') ? c1 - '0' : 
+                     (c1 >= 'A' && c1 <= 'F') ? c1 - 'A' + 10 : 
+                     (c1 >= 'a' && c1 <= 'f') ? c1 - 'a' + 10 : 0;
+                     
+        uint8_t v2 = (c2 >= '0' && c2 <= '9') ? c2 - '0' : 
+                     (c2 >= 'A' && c2 <= 'F') ? c2 - 'A' + 10 : 
+                     (c2 >= 'a' && c2 <= 'f') ? c2 - 'a' + 10 : 0;
+                     
+        out[j++] = (v1 << 4) | v2;
+    }
+    return j;
+}
+
+/**
+ * @brief Convert Base64 string to binary
+ */
+static int b64_val(char c) {
+    if (c >= 'A' && c <= 'Z') return c - 'A';
+    if (c >= 'a' && c <= 'z') return c - 'a' + 26;
+    if (c >= '0' && c <= '9') return c - '0' + 52;
+    if (c == '+') return 62;
+    if (c == '/') return 63;
+    return -1;
+}
+
+static size_t from_base64(const char *src, size_t len, uint8_t *out)
+{
+    size_t i = 0, j = 0;
+    int v1, v2, v3, v4;
+    
+    while (i < len) {
+        /* Skip non-base64 chars (newlines, etc) */
+        while (i < len && b64_val(src[i]) == -1 && src[i] != '=') i++;
+        if (i >= len) break;
+        
+        v1 = b64_val(src[i++]);
+        
+        while (i < len && b64_val(src[i]) == -1 && src[i] != '=') i++;
+        if (i >= len) break;
+        v2 = b64_val(src[i++]);
+        
+        while (i < len && b64_val(src[i]) == -1 && src[i] != '=') i++;
+        if (i >= len) break;
+        char c3 = src[i++];
+        v3 = (c3 == '=') ? 0 : b64_val(c3);
+        
+        while (i < len && b64_val(src[i]) == -1 && src[i] != '=') i++;
+        if (i >= len) break;
+        char c4 = src[i++];
+        v4 = (c4 == '=') ? 0 : b64_val(c4);
+        
+        if (v1 >= 0 && v2 >= 0) {
+            out[j++] = (v1 << 2) | ((v2 >> 4) & 0x03);
+            if (c3 != '=') {
+                out[j++] = ((v2 << 4) & 0xF0) | ((v3 >> 2) & 0x0F);
+                if (c4 != '=') {
+                    out[j++] = ((v3 << 6) & 0xC0) | (v4 & 0x3F);
+                }
+            }
+        }
+    }
     return j;
 }
 
@@ -194,8 +271,28 @@ void MavlinkBridge_OnMessage(const char *topic, const uint8_t *payload, size_t l
 {
     if (bridge.uart == NULL) return;
 
+    LOG_INFO("Bridge Rx Msg: Topic=%s Len=%d", topic, len);
+
+    /* Check if topic matches RX topic (flexible match) */
     if (strstr(topic, "mavlink/rx") != NULL) {
-        /* Forward to UART (TODO: decode if needed) */
-        UART_DMA_Transmit(bridge.uart, payload, len);
+        static uint8_t decode_buf[512];
+        size_t decoded_len = 0;
+
+        #if BRIDGE_ENCODING == ENCODE_BASE64
+            decoded_len = from_base64((const char*)payload, len, decode_buf);
+            LOG_INFO("Decoded Base64: %d bytes", decoded_len);
+        #else
+            decoded_len = from_hex((const char*)payload, len, decode_buf);
+            LOG_INFO("Decoded Hex: %d bytes", decoded_len);
+        #endif
+
+        if (decoded_len > 0) {
+            /* Forward to UART */
+            UART_DMA_Transmit(bridge.uart, decode_buf, decoded_len);
+        } else {
+            LOG_ERROR("Decode Failed or Empty");
+        }
+    } else {
+        LOG_WARN("Bridge Ignored Topic: %s", topic);
     }
 }

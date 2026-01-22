@@ -28,20 +28,79 @@ static void clear_rx_buffer(A7600_MQTT_Handle_t *handle)
     memset(handle->rx_buffer, 0, sizeof(handle->rx_buffer));
 }
 
+/* Define send_at_cmd logging inside the file or enable it generally */
 static bool send_at_cmd(A7600_MQTT_Handle_t *handle, const char *cmd)
 {
     clear_rx_buffer(handle);
+    
+    /* Log the command being sent for debug */
+    LOG_INFO("CMD: %s", cmd);
     
     /* Wait for TX to be free */
     uint32_t start = HAL_GetTick();
     while (UART_DMA_IsTxBusy(handle->uart)) {
         if (HAL_GetTick() - start > 1000) {
+            LOG_ERROR("TX Failed: Timeout");
             return false;
         }
     }
     
     HAL_StatusTypeDef status = UART_DMA_TransmitString(handle->uart, cmd);
     return (status == HAL_OK);
+}
+
+/* Old Subscribe removed - see implementation above */
+
+MQTT_Result_t A7600_MQTT_Subscribe(A7600_MQTT_Handle_t *handle, const char *topic, MQTT_QoS_t qos)
+{
+    char cmd[AT_CMD_MAX_LEN];
+    size_t topic_len;
+    
+    if (handle == NULL || topic == NULL) {
+        return MQTT_ERROR;
+    }
+    
+    if (!handle->connected) {
+        return MQTT_NOT_CONNECTED;
+    }
+    
+    handle->state = MQTT_STATE_SUBSCRIBING;
+    topic_len = strlen(topic);
+    
+    LOG_INFO("Subscribing (2-step): len=%d topic=%s", topic_len, topic);
+    
+    /* Step 1: Send Command with Length */
+    /* AT+CMQTTSUB=<client_index>,<req_len>,<qos> */
+    snprintf(cmd, sizeof(cmd), "AT+CMQTTSUB=0,%d,%d\r\n", topic_len, qos);
+    if (!send_and_wait(handle, cmd, ">", MQTT_CMD_TIMEOUT)) {
+        LOG_ERROR("Subscribe Step 1 Failed! Resp: %s", handle->rx_buffer);
+        handle->state = MQTT_STATE_CONNECTED;
+        return MQTT_ERROR;
+    }
+    
+    /* Step 2: Send Topic String */
+    if (!send_and_wait(handle, topic, "OK", MQTT_CMD_TIMEOUT)) {
+        LOG_ERROR("Subscribe Step 2 Failed! Resp: %s", handle->rx_buffer);
+        handle->state = MQTT_STATE_CONNECTED;
+        return MQTT_ERROR;
+    }
+    
+    /* Step 3: Wait for confirmation +CMQTTSUB: 0,0 */
+    /* Sometimes it comes with OK, sometimes later. wait_response above caught OK. */
+    /* Now check for implicit +CMQTTSUB: 0,0 if needed, or assume OK is enough if logs show it. */
+    /* Usually SIM7600 returns OK first, then +CMQTTSUB: 0,0. 
+       We should ideally wait for the URC. */
+       
+    if (strstr((char*)handle->rx_buffer, "+CMQTTSUB: 0,0") == NULL) {
+         LOG_INFO("Waiting for SUB URC...");
+         if (!wait_response(handle, "+CMQTTSUB: 0,0", 5000)) {
+             LOG_WARN("Subscribe URC timeout (but command might have worked)");
+         }
+    }
+    
+    LOG_INFO("Subscribed OK");
+    handle->state = MQTT_STATE_CONNECTED;
+    return MQTT_OK;
 }
 
 
@@ -293,6 +352,7 @@ MQTT_Result_t A7600_MQTT_Connect(A7600_MQTT_Handle_t *handle)
     }
     
     /* ========== Step 10: Connect to MQTT broker ========== */
+    LOG_INFO("Step 10: Connecting to Broker...");
     handle->state = MQTT_STATE_CONNECTING;
     snprintf(cmd, sizeof(cmd), 
              "AT+CMQTTCONNECT=0,\"tcp://%s:%d\",%d,1,\"%s\",\"%s\"\r\n",
@@ -381,30 +441,7 @@ bool A7600_UploadCert(A7600_MQTT_Handle_t *handle, const char *filename, const c
     return true;
 }
 
-MQTT_Result_t A7600_MQTT_Subscribe(A7600_MQTT_Handle_t *handle, const char *topic, MQTT_QoS_t qos)
-{
-    char cmd[AT_CMD_MAX_LEN];
-    
-    if (handle == NULL || topic == NULL) {
-        return MQTT_ERROR;
-    }
-    
-    if (!handle->connected) {
-        return MQTT_NOT_CONNECTED;
-    }
-    
-    handle->state = MQTT_STATE_SUBSCRIBING;
-    
-    /* Subscribe to topic */
-    snprintf(cmd, sizeof(cmd), "AT+CMQTTSUB=0,\"%s\",%d\r\n", topic, qos);
-    if (!send_and_wait(handle, cmd, "+CMQTTSUB: 0,0", MQTT_CMD_TIMEOUT)) {
-        handle->state = MQTT_STATE_CONNECTED;
-        return MQTT_ERROR;
-    }
-    
-    handle->state = MQTT_STATE_CONNECTED;
-    return MQTT_OK;
-}
+/* Old Subscribe removed - see implementation above */
 
 MQTT_Result_t A7600_MQTT_Unsubscribe(A7600_MQTT_Handle_t *handle, const char *topic)
 {
@@ -517,29 +554,87 @@ void A7600_MQTT_Process(A7600_MQTT_Handle_t *handle)
         handle->rx_len += len;
         handle->rx_buffer[handle->rx_len] = '\0';
         
-        /* Check for incoming message: +CMQTTRXSTART: ... */
+        /* Debug log received data */
+        LOG_INFO("MQTT Rx (%d): %s", len, (char*)&handle->rx_buffer[handle->rx_len - len]);
+
+        /* Check for incoming message */
         char *msg_start = strstr((char *)handle->rx_buffer, "+CMQTTRXSTART:");
+        char *msg_end = strstr((char *)handle->rx_buffer, "+CMQTTRXEND:");
+        
         if (msg_start != NULL) {
-            /* Parse incoming message */
-            char *payload_start = strstr((char *)handle->rx_buffer, "+CMQTTRXPAYLOAD:");
-            char *msg_end = strstr((char *)handle->rx_buffer, "+CMQTTRXEND:");
+             LOG_INFO("Found RXSTART");
+        }
+
+        if (msg_start != NULL && msg_end != NULL) {
+            /* We have a complete message! */
+            LOG_INFO("Found Complete Message");
             
-            if (payload_start != NULL && msg_end != NULL && handle->msg_callback != NULL) {
-                /* Extract topic and payload (simplified parsing) */
-                /* In real implementation, parse the full URC format */
-                handle->msg_callback("", handle->rx_buffer, handle->rx_len);
+            /* Find payload marker */
+            char *payload_marker = strstr((char *)handle->rx_buffer, "+CMQTTRXPAYLOAD:");
+            
+            if (payload_marker != NULL && handle->msg_callback != NULL) {
+                /* Simple parsing: 
+                   +CMQTTRXPAYLOAD: <len>
+                   <payload_data>
+                   +CMQTTRXEND: 0
+                */
+                char *payload_line_end = strstr(payload_marker, "\r\n");
+                if (payload_line_end != NULL) {
+                    char *payload_data = payload_line_end + 2; /* Skip \r\n after PAYLOAD line */
+                    
+                    /* Calculate payload length (everything until +CMQTTRXEND) */
+                    char *payload_end = strstr(payload_data, "+CMQTTRXEND");
+                    if (payload_end != NULL) {
+                        /* Remove trailing \r\n before +CMQTTRXEND if present */
+                        if (payload_end > payload_data && *(payload_end - 1) == '\n') payload_end--;
+                        if (payload_end > payload_data && *(payload_end - 1) == '\r') payload_end--;
+                        
+                        size_t payload_len = payload_end - payload_data;
+                        
+                        /* Correct Topic Parsing: Find +CMQTTRXTOPIC: header */
+                        char *topic_header = strstr(msg_start, "+CMQTTRXTOPIC:");
+                        if (topic_header != NULL && topic_header < payload_marker) {
+                            char *topic_len_end = strstr(topic_header, "\r\n");
+                            
+                            if (topic_len_end != NULL && topic_len_end < payload_marker) {
+                                char *topic_start = topic_len_end + 2; /* Topic content is on the next line */
+                                char *topic_end = strstr(topic_start, "\r\n");
+                                
+                                if (topic_end != NULL && topic_end < payload_marker) {
+                                    static char topic_buf[128];
+                                    size_t topic_len = topic_end - topic_start;
+                                    if (topic_len >= sizeof(topic_buf)) topic_len = sizeof(topic_buf) - 1;
+                                    memcpy(topic_buf, topic_start, topic_len);
+                                    topic_buf[topic_len] = '\0';
+                                    
+                                    LOG_INFO("Parsed Msg - Topic: %s, PayloadLen: %d", topic_buf, payload_len);
+
+                                    /* Call callback with parsed topic and payload */
+                                    handle->msg_callback(topic_buf, (uint8_t*)payload_data, payload_len);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                LOG_ERROR("Parse Error: Marker=%p Callback=%p", payload_marker, handle->msg_callback);
             }
             
-            /* Clear buffer after processing */
-            if (msg_end != NULL) {
-                clear_rx_buffer(handle);
-            }
+            /* Clear buffer */
+            clear_rx_buffer(handle);
         }
         
         /* Check for disconnect */
         if (strstr((char *)handle->rx_buffer, "+CMQTTCONNLOST:") != NULL) {
+            LOG_ERROR("MQTT Connection Lost");
             handle->connected = false;
             handle->state = MQTT_STATE_IDLE;
+            clear_rx_buffer(handle);
+        }
+        
+        /* Prevent buffer overflow - clear if too full */
+        if (handle->rx_len > sizeof(handle->rx_buffer) - 100) {
+            LOG_WARN("Rx Buffer Full - Clearing");
             clear_rx_buffer(handle);
         }
     }

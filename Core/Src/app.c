@@ -93,9 +93,12 @@ bool App_Connect(App_Handle_t *app)
     app->state = APP_STATE_CONNECTING;
     
     /* Connect to MQTT broker */
+    LOG_INFO("App_Connect: Calling A7600_MQTT_Connect...");
     MQTT_Result_t result = A7600_MQTT_Connect(&app->mqtt);
+    LOG_INFO("App_Connect: Result = %d", result);
     
     if (result == MQTT_OK) {
+        LOG_INFO("App_Connect: Success Block Entered");
         app->state = APP_STATE_CONNECTED;
         app->error_count = 0;
         
@@ -103,7 +106,16 @@ bool App_Connect(App_Handle_t *app)
         //A7600_MQTT_Subscribe(&app->mqtt, APP_TOPIC_COMMAND, MQTT_QOS_0);
         
         /* Subscribe to Bridge Rx */
-        A7600_MQTT_Subscribe(&app->mqtt, BRIDGE_TOPIC_RX, MQTT_QOS_0);
+        LOG_INFO("App_Connect: Subscribing...");
+        //HAL_Delay(5000); /* Wait longer (5s) for session to stabilize */
+        
+        if (A7600_MQTT_Subscribe(&app->mqtt, BRIDGE_TOPIC_RX, MQTT_QOS_0) != MQTT_OK) {
+             LOG_ERROR("Subscribe to RX Topic Failed!");
+             // Optional: Return false to trigger retry? Or just continue?
+             // return false; 
+        } else {
+             LOG_INFO("Subscribed to RX Topic: %s", BRIDGE_TOPIC_RX);
+        }
         
         /* Publish online status */
         App_PublishStatus(app, "online");
@@ -168,12 +180,14 @@ void App_Run(App_Handle_t *app)
     
     switch (app->state) {
         case APP_STATE_INIT:
+            LOG_INFO("App State: INIT");
             /* Wait for initialization */
             break;
             
         case APP_STATE_WAIT_MODULE:
             /* Try to connect */
             if (current_tick - app->last_reconnect_tick >= 5000) {
+                LOG_INFO("App State: WAIT_MODULE -> Try Connect");
                 app->last_reconnect_tick = current_tick;
                 App_Connect(app);
             }
@@ -181,6 +195,7 @@ void App_Run(App_Handle_t *app)
             
         case APP_STATE_CONNECTING:
             /* Handled by App_Connect() */
+             LOG_INFO("App State: CONNECTING...");
             break;
             
         case APP_STATE_CONNECTED:
@@ -192,6 +207,7 @@ void App_Run(App_Handle_t *app)
             
             /* Check connection */
             if (!A7600_MQTT_IsConnected(&app->mqtt)) {
+                LOG_ERROR("Disconnected! Switching to ERROR state");
                 app->state = APP_STATE_ERROR;
                 break;
             }
@@ -210,8 +226,10 @@ void App_Run(App_Handle_t *app)
             break;
             
         case APP_STATE_ERROR:
+            // LOG_INFO("App State: ERROR");
             /* Try to reconnect */
             if (current_tick - app->last_reconnect_tick >= APP_RECONNECT_INTERVAL) {
+                LOG_INFO("App State: ERROR -> Retrying...");
                 app->last_reconnect_tick = current_tick;
                 
                 /* Disconnect and reconnect */

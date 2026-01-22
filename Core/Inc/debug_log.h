@@ -12,7 +12,7 @@
 /* GLOBAL DEBUG ENABLE SWITCH 
  * Comment out this line to disable all debug logging code generation
  */
-/* #define DEBUG_ENABLE */  /* DISABLED: UART1 is used for MAVLink! */
+/* #define DEBUG_ENABLE */   /* Enabled for testing RX flow */
 
 #ifdef DEBUG_ENABLE
     

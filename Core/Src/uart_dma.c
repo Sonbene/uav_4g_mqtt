@@ -121,7 +121,13 @@ HAL_StatusTypeDef UART_DMA_Transmit(UART_DMA_Handle_t *handle, const uint8_t *da
     
     /* Start transmission */
     handle->tx_busy = true;
-    return HAL_UART_Transmit_DMA(handle->huart, handle->tx_buffer, to_send);
+    HAL_StatusTypeDef status = HAL_UART_Transmit_DMA(handle->huart, handle->tx_buffer, to_send);
+    
+    if (status != HAL_OK) {
+        handle->tx_busy = false;
+    }
+    
+    return status;
 }
 
 HAL_StatusTypeDef UART_DMA_TransmitString(UART_DMA_Handle_t *handle, const char *str)
