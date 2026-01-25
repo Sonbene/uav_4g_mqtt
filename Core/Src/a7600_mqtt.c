@@ -107,9 +107,15 @@ MQTT_Result_t A7600_MQTT_Subscribe(A7600_MQTT_Handle_t *handle, const char *topi
 
 static bool wait_response(A7600_MQTT_Handle_t *handle, const char *expected, uint32_t timeout_ms)
 {
+    /* Get IWDG handle for refresh during long waits */
+    extern IWDG_HandleTypeDef hiwdg;
+    
     uint32_t start = HAL_GetTick();
     
     while (HAL_GetTick() - start < timeout_ms) {
+        /* Refresh IWDG to prevent reset during long waits */
+        HAL_IWDG_Refresh(&hiwdg);
+        
         /* Read any available data */
         size_t available = UART_DMA_Available(handle->uart);
         if (available > 0) {

@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "d:/job_timelapse/stm32/uav_4g/test_a7600/Core/Src",
-      "program": "d:/job_timelapse/stm32/uav_4g/test_a7600/Core/Src/build/Debug/outDebug",
+      "cwd": "d:/job_timelapse/stm32/uav_4g/test_a7600_run_mqtt_receive_ok/Core/Src",
+      "program": "d:/job_timelapse/stm32/uav_4g/test_a7600_run_mqtt_receive_ok/Core/Src/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
